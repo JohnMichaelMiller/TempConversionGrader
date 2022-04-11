@@ -1,0 +1,51 @@
+parameters:
+- name: slotName # name of the slot to verify; required
+  type: string # data type of the parameter; required
+  default: '-staging'
+
+
+- stage: Verification
+  displayName: Verification
+  dependsOn: Deployment
+  condition: succeeded()
+  
+  jobs: 
+  
+  #TD: -12 Include the build date and sha in the body of the response; Exclude the build date and time from Run, Integration and other tests.
+  - job: RunIntegrationTests
+    displayName: Run Integration Tests
+
+    steps:
+
+    - powershell: |
+        ls $(System.DefaultWorkingDirectory) -R
+      displayName: Show Contents of Working Directory
+      condition: ${{ variables.debug }}    
+
+    - task: AzureCLI@2
+      displayName: Pester Integration Tests
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './IntegrationTests/*.ps1'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputFormat = 'NUnitXml'
+          $config.TestResult.OutputPath = './IntegrationTests/testResults.xml'
+          $config.TestResult.TestSuiteName = 'Pester Integration Tests'
+          Invoke-Pester -Configuration $config
+
+    - powershell: |
+        ls $(System.DefaultWorkingDirectory) -R
+      displayName: Show Contents of Working Directory
+      condition: ${{ variables.debug }}    
+
+    - task: PublishTestResults@2
+      displayName: Publish Integration Test Results
+      inputs:
+        testResultsFormat: 'NUnit'
+        testResultsFiles: '$(System.DefaultWorkingDirectory)/IntegrationTests/testResults.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Pester Integration Tests'

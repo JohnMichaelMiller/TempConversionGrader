@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PowerShell Launch test.ps1",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": ".\\test.ps1 -location westus -resourceGroupName 'test' -workingDirectory C:\\git\\Juxce",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Attach to PowerShell Functions",
+            "type": "PowerShell",
+            "request": "attach",
+            "customPipeName": "AzureFunctionsPSWorker",
+            "runspaceId": 1,
+            "preLaunchTask": "func: host start"
+        }
+    ]
+}
